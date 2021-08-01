@@ -1,0 +1,29 @@
+stages:
+  - test
+  - staging
+
+javascript:
+  stage: test
+  script:
+    - 'jest --ci --reporters=default --reporters=jest-junit'
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - junit.xml
+  only:
+    - master
+    - staging-wishnu
+  
+staging:
+  image: node:12.16.1
+  stage: staging
+  script:
+    - git push https://$HEROKU_USER:$HEROKU_API_KEY@git.heroku.com/tukarjakun.git HEAD:master
+    - echo "Deployed to qa server"
+  environment:  
+    name: staging
+    url: $HEROKU_APP_HOST
+  only:
+    - master
+    - staging-wishnu

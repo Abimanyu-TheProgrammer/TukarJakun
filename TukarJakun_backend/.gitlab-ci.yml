@@ -1,0 +1,86 @@
+stages:
+  - build
+  - test
+  - sonar
+  - staging
+  # - production
+
+default:
+  image: gradle:6.8.2-jdk15
+  before_script:
+    - export GRADLE_USER_HOME=`pwd`/.gradle
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+build:
+  stage: build
+  script:
+    - gradle assemble
+
+test:
+  stage: test
+  script:
+    - gradle test
+    - gradle check
+    - gradle jacocoTestReport
+    - gradle jacocoTestCoverageVerification
+    - gradle jacocoMergeTest
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
+    paths:
+      - build/jacoco/allTestCoverage.exec
+
+sonar check:
+  stage: sonar
+  variables:
+    SONAR_HOST_URL: $SONAR_HOST_URL
+    SONAR_PROJECT_KEY: $SONAR_PROJECT_KEY_2
+    SONAR_PROJECT_NAME: $SONAR_PROJECT_NAME_2
+  needs:
+    - job: test
+  script:
+    - gradle sonarqube -Dsonar.login=$SONAR_TOKEN_2
+  only:
+    - staging-abi
+
+staging:
+  image: ruby:2.4
+  stage: staging
+  before_script:
+    - gem install dpl
+    - wget https://cli-assets.heroku.com/install-ubuntu.sh
+    - export HEROKU_API_KEY=$HEROKU_API_KEY
+  script:
+    - dpl --provider=heroku --app=$HEROKU_APP_NAME --api-key=$HEROKU_API_KEY
+    - export HEROKU_API_KEY=$HEROKU_API_KEY
+  environment:
+    name: production
+    url: $HEROKU_APP_HOST
+  only:
+    - master
+
+# production:
+#   image: ruby:2.4
+#   stage: staging
+#   before_script:
+#     - gem install dpl
+#     - wget https://cli-assets.heroku.com/install-ubuntu.sh
+#     - export HEROKU_API_KEY=$HEROKU_API_KEY
+#   script:
+#     - dpl --provider=heroku --app=$HEROKU_APP_PRODUCTION --api-key=$HEROKU_API_KEY
+#     - export HEROKU_API_KEY=$HEROKU_API_KEY
+#   environment:
+#     name: production
+#     url: $HEROKU_URL_PRODUCTION
+#   only:
+#     - master
+
+cache:
+  key: "$CI_COMMIT_REF_NAME"
+  paths:
+    - $GRADLE_USER_HOME/wrapper
+    - $GRADLE_USER_HOME/caches
+

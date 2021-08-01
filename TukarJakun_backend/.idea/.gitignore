@@ -1,0 +1,14 @@
+<<<<<<< HEAD
+# Default ignored files
+/shelf/
+/workspace.xml
+=======
+# Default ignored files
+/shelf/
+/workspace.xml
+# Datasource local storage ignored files
+/../../../../../../../:\Programming\Adpro\Code\bagus\adpro-group\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+>>>>>>> 36990a80d43d39ad6042374baf6c99b04e0560ba
